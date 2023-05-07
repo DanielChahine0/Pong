@@ -3,7 +3,7 @@ This is a remake of the game Pong using pygame
     no photos will be used, it will mainly be consisted of squares and rectangles
 """
 import pygame
-
+import random
 
 """
 ----------------------------------------------------------------
@@ -22,7 +22,19 @@ PLAYER_1_X = X_GAP
 PLAYER_1_Y = HEIGHT//2-PLAYER_HEIGHT//2
 PLAYER_2_X = WIDTH-X_GAP
 PLAYER_2_Y = HEIGHT//2-PLAYER_HEIGHT//2
-PLAYER_SPEED = 5
+PLAYER_SPEED = 10
+
+# Ball constant
+BALL_SIZE = 10
+BALL_X = X_GAP + PLAYER_WIDTH
+BALL_Y = HEIGHT//2 - BALL_SIZE//2
+BALL_VEL_X = 5
+BALL_VEL_Y = 5
+MAX_Y_VEL = 5
+
+# Score
+SCORE1 = 0
+SCORE2 = 0
 
 
 # Initializing pygame
@@ -34,6 +46,36 @@ pygame.display.set_caption("Pong")
                             Functions
 ----------------------------------------------------------------
 """
+
+
+def lose():
+    global SCORE1, SCORE2, BALL_X, BALL_Y, BALL_VEL_X, BALL_VEL_Y
+
+    if BALL_X <= 0:
+        SCORE1 += 1
+    if BALL_X >= WIDTH - BALL_SIZE:
+        SCORE2 += 1
+
+    print("SCORE1: " + str(SCORE1) + "---SCORE2: " + str(SCORE2))
+
+    BALL_X = X_GAP + PLAYER_WIDTH
+    BALL_Y = HEIGHT//2 - BALL_SIZE//2
+    BALL_VEL_X = 5
+    BALL_VEL_Y = 5
+
+
+def detect_collision():
+    global BALL_VEL_X
+
+    # if the ball touches the right player
+    if BALL_X <= X_GAP+PLAYER_WIDTH:
+        if PLAYER_1_Y <= BALL_Y <= PLAYER_1_Y+PLAYER_HEIGHT:
+            BALL_VEL_X = - BALL_VEL_X
+
+    # if the ball touches the left player
+    if BALL_X == WIDTH - X_GAP - PLAYER_WIDTH:
+        if PLAYER_2_Y <= BALL_Y <= PLAYER_2_Y + PLAYER_HEIGHT:
+            BALL_VEL_X = - BALL_VEL_X
 
 
 def draw_bg():
@@ -53,13 +95,36 @@ def draw_players():
     pygame.draw.rect(WINDOW, "white", player2)
 
 
+def draw_ball():
+    """
+    This function draws the ball
+    """
+    global BALL_Y, BALL_X, BALL_VEL_X, BALL_VEL_Y
+
+    ball = pygame.Rect(BALL_X, BALL_Y, BALL_SIZE, BALL_SIZE)
+
+    # If the ball touches the right or left border
+    if BALL_X > WIDTH-BALL_SIZE or BALL_X < 0:
+        lose()
+
+    # If the ball hit the bottom or upper border
+    if BALL_Y < 0 or BALL_Y > HEIGHT - BALL_SIZE:
+        BALL_VEL_Y = -BALL_VEL_Y
+
+    BALL_Y += BALL_VEL_Y
+    BALL_X += BALL_VEL_X
+
+    pygame.draw.rect(WINDOW, "white", ball)
+
+
 def draw():
     """
     This function draws the game
     """
     draw_bg()
     draw_players()
-
+    draw_ball()
+    detect_collision()
     pygame.display.update()
 
 
@@ -71,7 +136,7 @@ def main():
     running = True
 
     # Getting the global variables
-    global PLAYER_1_Y, PLAYER_2_Y, PLAYER_SPEED
+    global PLAYER_1_Y, PLAYER_2_Y, BALL_VEL_Y, PLAYER_SPEED
 
     while running:
         clock = pygame.time.Clock()
@@ -83,9 +148,6 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                # if event.key == pygame.K_DOWN:
-                #     if HEIGHT - PLAYER_HEIGHT > PLAYER_1_Y > 0:
-                #         PLAYER_1_Y += 10
 
         keys = pygame.key.get_pressed()
 
@@ -98,6 +160,7 @@ def main():
             if PLAYER_1_Y >= 0:
                 PLAYER_1_Y -= PLAYER_SPEED
 
+        # PLAYER ON THE RIGHT
         if keys[pygame.K_DOWN]:
             if HEIGHT - PLAYER_HEIGHT >= PLAYER_2_Y:
                 PLAYER_2_Y += PLAYER_SPEED
@@ -109,6 +172,7 @@ def main():
         # Control Game Speed
         clock.tick(60)
 
+        # Draw the
         draw()
 
 
